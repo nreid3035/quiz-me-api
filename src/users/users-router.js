@@ -16,6 +16,25 @@ usersRouter
             })
             .catch(next)
     })
+    .post(jsonParser, (req, res, next) => {
+        const { first_name, last_name, username, email, user_password } = req.body
+        const newUser = {
+            first_name,
+            last_name,
+            username,
+            email,
+            user_password
+        }
+        const knexInstance = req.app.get('db')
+        UsersService.postNewUser(knexInstance, newUser)
+            .then(user => {
+                res
+                   .status(201)
+                   .location(`/api/users/${user.id}`)
+                   .json(user)
+            })
+            .catch(next)
+    })
 
 
 usersRouter
@@ -25,7 +44,6 @@ usersRouter
         const id = req.params.userId
         UsersService.getUserById(knexInstance, id)
             .then(user => {
-                console.log(user)
                 if (!user) {
                     return res.status(404).json({
                         error: { message: 'User does not exist' }
@@ -38,6 +56,16 @@ usersRouter
     })
     .get((req, res, next) => {
         res.status(200).json(res.user)
+    })
+    .delete((req, res, next) => {
+        const knexInstance = req.app.get('db')
+        const id = req.params.userId
+
+        UsersService.deleteUser(knexInstance, id)
+            .then(numRowsAffected => {
+                res.status(204).end()
+            }) 
+            .catch(next)
     })
 
 

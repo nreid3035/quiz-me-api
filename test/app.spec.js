@@ -47,7 +47,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
           })
       })
-      describe.only('GET /api/users/:userId', () => {
+      describe('GET /api/users/:userId', () => {
           context('Given no users', () => {
             it('responds with 404 and an error message saying not found', () => {
               const id = 123456
@@ -98,12 +98,6 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
       })
 
       describe('POST /api/users', () => {
-          context('Given an invalid request', () => {
-            it('responds with an error message', () => {
-
-            })
-          })
-
           context('Given an xss attack script', () => {
             it('should sanitize the user', () => {
 
@@ -112,21 +106,68 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
 
           context('Given a valid request', () => {
               it('responds with 201 and the created user', () => {
+                  const newUser = {
+                      first_name: 'First',
+                      last_name: 'Last',
+                      username: 'CrunchyOmlete32',
+                      email: 'fakeemail@aol.com',
+                      user_password: 'passy123'
+                  }
 
+                  return supertest(app)
+                      .post('/api/users')
+                      .send(newUser)
+                      .expect(201)
+                      .expect(res => {
+                          expect(res.body).to.have.property('id')
+                          expect(res.body.first_name).to.eql(newUser.first_name)
+                          expect(res.body.last_name).to.eql(newUser.last_name)
+                          expect(res.body.username).to.eql(newUser.username)
+                          expect(res.body.email).to.eql(newUser.email)
+                          expect(res.body.user_password).to.eql(newUser.user_password)
+                      })
+                      .then(postRes => 
+                        supertest(app)
+                            .get(`/api/users/${postRes.body.id}`)
+                            .expect(postRes.body)
+                        )
               })
           })
       })
 
-      describe('DELETE /api/users/:userId', () => {
+      describe.only('DELETE /api/users/:userId', () => {
           context('Given an invalid request', () => {
               it('responds with 404 and an error message', () => {
-
+                const id = 123456
+                return supertest(app)
+                    .delete(`/api/users/${id}`)
+                    .expect(404, {
+                        error: { message: 'User does not exist' }
+                    })
               })
           })
 
           context('Given a valid request', () => {
-              it('responds with 204', () => {
+              const testUsers = makeUsersArray()
 
+              before('insert users', () => {
+                  return db
+                      .into('quiz_me_users')
+                      .insert(testUsers)
+              })
+
+              it('responds with 204', () => {
+                  const idToDelete = 2
+                  const expectedUsers = testUsers.filter(user => user.id !== idToDelete)
+                  
+                  return supertest(app)
+                      .delete(`/api/users/${idToDelete}`)
+                      .expect(204)
+                      .then(res => 
+                        supertest(app)
+                            .get('/api/users')
+                            .expect(expectedUsers)
+                      )
               })
           })
       })
