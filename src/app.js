@@ -6,6 +6,8 @@ const {CLIENT_ORIGIN} = require('./config')
 const helmet = require('helmet')
 const { NODE_ENV } = require('./config')
 const usersRouter = require('./users/users-router')
+const flashcardsRouter = require('./flashcards/flashcards-router')
+const quizzesRouter = require('./quizzes/quizzes-router')
 
 const app = express()
 
@@ -20,6 +22,8 @@ app.use(cors({
 }))
 
 app.use('/api/users', usersRouter)
+app.use('/api/flashcards', flashcardsRouter)
+app.use('/api/quizzes', quizzesRouter)
 
 app.get('/api/', (req, res) => {
     res.json({ok: true})

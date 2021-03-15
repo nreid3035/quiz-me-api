@@ -3,6 +3,8 @@ const { expect } = require('chai')
 const knex = require('knex')
 const supertest = require('supertest')
 const { makeUsersArray } = require('./users.fixtures')
+const { makeFlashArray } = require('./flashcards.fixtures')
+const { makeQuizzesArray } = require('./quizzes.fixtures')
 
 
 describe('Quiz Me Endpoints', () => {
@@ -135,7 +137,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
       })
 
-      describe.only('DELETE /api/users/:userId', () => {
+      describe('DELETE /api/users/:userId', () => {
           context('Given an invalid request', () => {
               it('responds with 404 and an error message', () => {
                 const id = 123456
@@ -150,7 +152,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           context('Given a valid request', () => {
               const testUsers = makeUsersArray()
 
-              before('insert users', () => {
+              beforeEach('insert users', () => {
                   return db
                       .into('quiz_me_users')
                       .insert(testUsers)
@@ -177,24 +179,35 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
       describe('GET /api/flashcards', () => {
           context('Given no flashcards', () => {
               it('should respond with 200 and an empty array', () => {
-
+                return supertest(app)
+                    .get('/api/flashcards')
+                    .expect(200, [])
               })
           })
 
           context('Given valid flashcards', () => {
-              it('should respond with 200 and all flashcards associated with that user', () => {
+              const testUsers = makeUsersArray()
+              const testFlashcards = makeFlashArray()
 
+              beforeEach('insert users, then flashcards', () => {
+                  return db
+                      .into('quiz_me_users')
+                      .insert(testUsers)
+                      .then(() => {
+                          return db
+                              .into('quiz_me_flashcards')
+                              .insert(testFlashcards)
+                      })
+              })
+              it('should respond with 200 and all flashcards associated with that user', () => {
+                  return supertest(app)
+                      .get('/api/flashcards')
+                      .expect(testFlashcards)
               })
           })
       })
 
       describe('POST /api/flashcards', () => {
-          context('Given an invalid request', () => {
-              it('should respond with 400 error and a message', () => {
-
-              })
-          })
-
           context('Given an xss attack script', () => {
             it('should sanitize the card', () => {
 
@@ -202,8 +215,36 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
         })
 
           context('Given a valid request', () => {
-              it('should respond with 201 and the new flashcard', () => {
+              const testUsers = makeUsersArray()
+  
+              beforeEach('insert users', () => {
+                  return db
+                      .into('quiz_me_users')
+                      .insert(testUsers)
+              })
 
+              it('should respond with 201 and the new flashcard', () => {
+                const newFlashcard = {
+                    userid: 1,
+                    question: 'WhATs a QueSTiOn?',
+                    answer: 'Huh??'
+                }
+
+                return supertest(app)
+                    .post('/api/flashcards')
+                    .send(newFlashcard)
+                    .expect(201)
+                    .expect(res => {
+                        expect(res.body).to.have.property('id')
+                        expect(res.body.userid).to.eql(newFlashcard.userid)
+                        expect(res.body.question).to.eql(newFlashcard.question)
+                        expect(res.body.answer).to.eql(newFlashcard.answer)
+                    })
+                    .then(postRes =>
+                        supertest(app)
+                            .get(`api/flashcards/${postRes.body.id}`)
+                            .expect(postRes.body)
+                        )
               })
           })
       })
@@ -211,19 +252,35 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
       describe('GET /api/flashcards/:flashId', () => {
           context('Given no flashcards', () => {
               it('should respond with 404 not found and an error message', () => {
-
-              })
-          })
-
-          context('Given a faulty request', () => {
-              it('should respond with 404 not found and a message', () => {
-
+                const id = 123456
+                return supertest(app)
+                    .get(`/api/flashcards/${id}`)
+                    .expect(404, {
+                        error: { message: 'Flashcard does not exist' }
+                    })
               })
           })
 
           context('Given valid flashcards', () => {
+              const testUsers = makeUsersArray()
+              const testCards = makeFlashArray()
+              beforeEach('insert users, then flashcards', () => {
+                  return db
+                      .into('quiz_me_users')
+                      .insert(testUsers)
+                      .then(() => {
+                          return db
+                            .into('quiz_me_flashcards')
+                            .insert(testCards)
+                      })
+              })
             it('should respond with 200 and the appropriate flashcard', () => {
+              const id = 2
+              const expectedFlashcard = testCards[id -1]
 
+              return supertest(app)
+                  .get(`/api/flashcards/${id}`)
+                  .expect(200, expectedFlashcard)
             })
           })
       })
@@ -231,19 +288,41 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
       describe('DELETE /api/flashcards/:flashId', () => {
           context('Given no flashcards', () => {
               it('should respond with 404 not found and an error message', () => {
-
-              })
-          })
-
-          context('Given an Id that does not exist', () => {
-              it('should respond with 404 not found and an error message', () => {
-
+                const id = 123456
+                return supertest(app)
+                    .delete(`/api/flashcards/${id}`)
+                    .expect(404, {
+                        error: { message: 'Flashcard does not exist' }
+                    })
               })
           })
 
           context('Given valid flashcards', () => {
-              it('should respond with 204', () => {
+              const testUsers = makeUsersArray()
+              const testFlashcards = makeFlashArray()
 
+              beforeEach('insert users, then flashcards', () => {
+                  return db 
+                      .into('quiz_me_users')
+                      .insert(testUsers)
+                      .then(() => {
+                          return db
+                              .into('quiz_me_flashcards')
+                              .insert(testFlashcards)
+                      })
+              })
+              it('should respond with 204', () => {
+                const idToDelete = 2
+                const expectedCards = testFlashcards.filter(card => card.id !== idToDelete)
+
+                return supertest(app)
+                    .delete(`/api/flashcards/${idToDelete}`)
+                    .expect(204)
+                    .then(res => 
+                        supertest(app)
+                            .get('/api/flashcards')
+                            .expect(expectedCards)
+                        )
               })
           })
       })   
@@ -253,24 +332,35 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           describe('GET /api/quizzes', () => {
               context('Given no quiz data', () => {
                   it('should respond with 200 and an empty array', () => {
-
+                    return supertest(app)
+                        .get('/api/quizzes')
+                        .expect(200, [])
                   })
               })
 
               context('Given valid quiz data', () => {
-                  it('should respond with 200 and the corresponding array of quizzes for the user', () => {
+                  const testUsers = makeUsersArray()
+                  const testQuizzes = makeQuizzesArray()
 
+                  beforeEach('insert users, then quizzes', () => {
+                      return db 
+                          .into('quiz_me_users')
+                          .insert(testUsers)
+                          .then(() => {
+                              return db
+                                  .into('quiz_me_quizzes')
+                                  .insert(testQuizzes)
+                          })
+                  })
+                  it('should respond with 200 and the corresponding array of quizzes for the user', () => {
+                    return supertest(app)
+                        .get('/api/quizzes')
+                        .expect(testQuizzes) 
                   })
               })
           })
 
           describe('POST /api/quizzes', () => {
-              context('Given an invalid request', () => {
-                  it('should respond with 400 and an error message saying the request was invalid', () =>{
-
-                  })
-              })
-
               context('Given an xss attack script', () => {
                   it('should sanitize the quiz', () => {
 
@@ -278,8 +368,36 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given a valid request', () => {
-                  it('should respond with 201 and the created quiz', () => {
+                  const testUsers = makeUsersArray()
+                  const testFlashcards = makeFlashArray()
 
+                  beforeEach('insert users', () => {
+                      return db
+                          .into('quiz_me_users')
+                          .insert(testUsers)
+                  })
+                  it('should respond with 201 and the created quiz', () => {
+                    const newQuiz = {
+                        card_ids: [1, 2],
+                        quiz_name: 'Dev Quiz',
+                        userid: 1
+                    }
+
+                    return supertest(app)
+                        .post('/api/quizzes')
+                        .send(newQuiz)
+                        .expect(201)
+                        .expect(res => {
+                            expect(res.body).to.have.property('id')
+                            expect(res.body.card_ids).to.eql(newQuiz.card_ids)
+                            expect(res.body.quiz_name).to.eql(newQuiz.quiz_name)
+                            expect(res.body.userid).to.eql(newQuiz.userid)
+                        })
+                        .then(postRes =>
+                            supertest(app)
+                                .get(`/api/quizzes/${postRes.body.id}`)
+                                .expect(postRes.body)
+                            )
                   })
               })
           })
@@ -287,27 +405,73 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           describe('GET /api/quizzes/:quizId', () => {
               context('Given no quizzes', () => {
                   it('should respond with 404 not found and an error message', () => {
-
+                    const id = 123456
+                    return supertest(app)
+                        .get(`/api/quizzes/${id}`)
+                        .expect(404, {
+                            error: { message: 'Quiz does not exist' }
+                        })
                   })
               })
 
               context('Given valid quiz data', () => {
-                  it('should respond with 200 and the corresponding quiz', () => {
+                  const testUsers = makeUsersArray()  
+                  const testQuizzes = makeQuizzesArray()
 
+                  beforeEach('insert users, then quizzes', () => {
+                      return db
+                          .into('quiz_me_users')
+                          .insert(testUsers)
+                          .then(() => {
+                              return db 
+                                  .into('quiz_me_quizzes')
+                                  .insert(testQuizzes)
+                          })
+                  })
+                  it('should respond with 200 and the corresponding quiz', () => {
+                    const id = 2
+                    const expectedQuiz = testQuizzes[id - 1]
+
+                    return supertest(app)
+                        .get(`/api/quizzes/${id}`)
+                        .expect(200, expectedQuiz)
                   })
               })
           })
 
-          describe('DELETE /api/quizzes/quizId', () => {
+          describe.only('DELETE /api/quizzes/quizId', () => {
               context('Given no quiz data', () => {
                   it('should respond with 404 not found and an error message', () => {
-
+                    const id = 123456
+                    return supertest(app)
+                        .delete(`/api/quizzes/${id}`)
+                        .expect(404, {
+                            error: { message: 'Quiz does not exist' }
+                        })
                   })
               })
 
               context('Given a valid dataset of quizzes', () => {
-                  it('should respond with 204', () => {
+                  const testUsers = makeUsersArray()
+                  const testQuizzes = makeQuizzesArray()
 
+                  beforeEach('insert users, then quizzes', () => {
+                      return db
+                          .into('quiz_me_users')
+                          .insert(testUsers)
+                          .then(() => {
+                              return db
+                                  .into('quiz_me_quizzes')
+                                  .insert(testQuizzes)
+                          })
+                  })
+                  it('should respond with 204', () => {
+                    const idToDelete = 2
+                    const expectedQuizzes = testQuizzes.filter(quiz => quiz.id !== idToDelete)
+
+                    return supertest(app)
+                        .delete(`/api/quizzes/${idToDelete}`)
+                        .expect(204)
                   })
               })
           })
