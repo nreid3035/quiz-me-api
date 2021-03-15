@@ -207,46 +207,81 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
       })
 
-      describe('POST /api/flashcards', () => {
+      describe.only('POST /api/flashcards', () => {
           context('Given an xss attack script', () => {
             it('should sanitize the card', () => {
 
             })
         })
 
-          context('Given a valid request', () => {
-              const testUsers = makeUsersArray()
-  
-              beforeEach('insert users', () => {
-                  return db
-                      .into('quiz_me_users')
-                      .insert(testUsers)
-              })
 
-              it('should respond with 201 and the new flashcard', () => {
-                const newFlashcard = {
+          context('Given a valid request', () => {
+            const testUsers = makeUsersArray()
+
+            beforeEach('insert users', () => {
+                return db
+                    .into('quiz_me_users')
+                    .insert(testUsers)
+            })
+
+            it('should respond with 201 and the new quiz', () => {
+                const newFlash = {
                     userid: 1,
-                    question: 'WhATs a QueSTiOn?',
-                    answer: 'Huh??'
+                    question: 'WHats A QuesTiON??',
+                    answer: 'yes'
                 }
 
                 return supertest(app)
                     .post('/api/flashcards')
-                    .send(newFlashcard)
+                    .send(newFlash)
                     .expect(201)
                     .expect(res => {
                         expect(res.body).to.have.property('id')
-                        expect(res.body.userid).to.eql(newFlashcard.userid)
-                        expect(res.body.question).to.eql(newFlashcard.question)
-                        expect(res.body.answer).to.eql(newFlashcard.answer)
+                        expect(res.body.userid).to.eql(newFlash.userid)
+                        expect(res.body.question).to.eql(newFlash.question)
+                        expect(res.body.answer).to.eql(newFlash.answer)
                     })
-                    .then(postRes =>
+                    .then(postRes => 
                         supertest(app)
-                            .get(`api/flashcards/${postRes.body.id}`)
+                            .get(`/api/flashcards/${postRes.body.id}`)
                             .expect(postRes.body)
                         )
-              })
+            })
           })
+
+        //   context('Given a valid request', () => {
+        //       const testUsers = makeUsersArray()
+  
+        //       beforeEach('insert users', () => {
+        //           return db
+        //               .into('quiz_me_users')
+        //               .insert(testUsers)
+        //       })
+
+        //       it('should respond with 201 and the new flashcard', () => {
+        //         const newFlashcard = {
+        //             userid: 1,
+        //             question: 'WhATs a QueSTiOn?',
+        //             answer: 'Huh??'
+        //         }
+
+        //         return supertest(app)
+        //             .post('/api/flashcards')
+        //             .send(newFlashcard)
+        //             .expect(201)
+        //             .expect(res => {
+        //                 expect(res.body).to.have.property('id')
+        //                 expect(res.body.userid).to.eql(newFlashcard.userid)
+        //                 expect(res.body.question).to.eql(newFlashcard.question)
+        //                 expect(res.body.answer).to.eql(newFlashcard.answer)
+        //             })
+        //             .then(postRes =>
+        //                 supertest(app)
+        //                     .get(`api/flashcards/${postRes.body.id}`)
+        //                     .expect(postRes.body)
+        //                 )
+        //       })
+        //   })
       })
 
       describe('GET /api/flashcards/:flashId', () => {
@@ -439,7 +474,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
           })
 
-          describe.only('DELETE /api/quizzes/quizId', () => {
+          describe('DELETE /api/quizzes/quizId', () => {
               context('Given no quiz data', () => {
                   it('should respond with 404 not found and an error message', () => {
                     const id = 123456
