@@ -38,6 +38,18 @@ usersRouter
 
 
 usersRouter
+    .route('/user-validation/:username')
+    .get((req, res, next) => {
+        const knexInstance = req.app.get('db')
+        const username = req.params.username
+        UsersService.getUserByUsername(knexInstance, username)
+            .then(user => {
+                res.status(200).json(user)
+            })
+    })
+
+
+usersRouter
     .route('/:userId')
     .all((req, res, next) => {
         const knexInstance = req.app.get('db')

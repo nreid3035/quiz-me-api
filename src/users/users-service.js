@@ -4,6 +4,13 @@ const UsersService = {
             .select('*')
             .from('quiz_me_users')    
     },
+    getUserByUsername(knex, username) {
+        return knex
+            .select('*')
+            .from('quiz_me_users')
+            .where('username', username)
+            .first()
+    },
     getUserById(knex, id) {
         return knex 
             .select('*')

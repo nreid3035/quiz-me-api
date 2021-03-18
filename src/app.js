@@ -21,6 +21,11 @@ app.use(cors({
     origin: CLIENT_ORIGIN
 }))
 
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*')
+    next()
+})
+
 app.use('/api/users', usersRouter)
 app.use('/api/flashcards', flashcardsRouter)
 app.use('/api/quizzes', quizzesRouter)
