@@ -6,9 +6,11 @@ const FlashcardsService = require('./flashcards-service')
 const flashcardsRouter = express.Router()
 const jsonParser = express.json()
 
+const { validateToken } = require('../middleware/validate-token')
+
 flashcardsRouter
     .route('/')
-    .get((req, res, next) => {
+    .get(validateToken, (req, res, next) => {
         const knexInstance = req.app.get('db')
         FlashcardsService.getAllFlashcards(knexInstance)
             .then(flashcards => {

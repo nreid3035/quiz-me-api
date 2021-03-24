@@ -4,5 +4,5 @@ CREATE TABLE quiz_me_users (
     last_name TEXT NOT NULL,
     username TEXT NOT NULL,
     email TEXT NOT NULL,
-    user_password TEXT NOT NULL  
+    password TEXT NOT NULL  
 );
