@@ -11,17 +11,21 @@ const { validateToken } = require('../middleware/validate-token')
 flashcardsRouter
     .route('/')
     .get(validateToken, (req, res, next) => {
+        console.log(req.userInfo)
+        const username = req.userInfo.username
         const knexInstance = req.app.get('db')
-        FlashcardsService.getAllFlashcards(knexInstance)
+        FlashcardsService.getAllFlashcards(knexInstance, username)
             .then(flashcards => {
                 res.status(200).json(flashcards)
             })
             .catch(next)
     })
-    .post(jsonParser, (req, res, next) => {
-        const { userid, question, answer } = req.body
+    .post(validateToken, jsonParser, (req, res, next) => {
+        const { question, answer } = req.body
+        const { username } = req.userInfo
+        console.log(username)
         const newFlashcard = {
-            userid: userid,
+            username: username,
             question: question,
             answer: answer
         }
@@ -31,7 +35,7 @@ flashcardsRouter
             .then(card => {
                 res
                 .status(201)
-                .location(`/api/flashcards/${card.id}`)
+                .location(`/api/flashcards/${card.flashcard_id}`)
                 .json(card)
             })
             .catch(next)
@@ -39,11 +43,12 @@ flashcardsRouter
 
 flashcardsRouter
     .route('/:cardId')
-    .all((req, res, next) => {
+    .all(validateToken, (req, res, next) => {
         console.log(req.params)
+        const username = req.userInfo.username
         const knexInstance = req.app.get('db')
         const { cardId } = req.params
-        FlashcardsService.getFlashById(knexInstance, cardId)
+        FlashcardsService.getFlashById(knexInstance, cardId, username)
             .then(flashcard => {
                 if (!flashcard) {
                     return res.status(404).json({
@@ -59,10 +64,11 @@ flashcardsRouter
         res.status(200).json(res.flashcard)
     })
     .delete((req, res, next) => {
+        const username = req.userInfo.username
         const knexInstance = req.app.get('db')
         const { cardId } = req.params
 
-        FlashcardsService.deleteFlash(knexInstance, cardId)
+        FlashcardsService.deleteFlash(knexInstance, cardId, username)
             .then(numRowsAffected => {
                 res.status(204).end()
             })

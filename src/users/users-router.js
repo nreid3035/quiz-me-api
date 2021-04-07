@@ -5,7 +5,7 @@ const UsersService = require('./users-service')
 const usersRouter = express.Router()
 const jsonParser = express.json()
 
-const validateToken = require('../app')
+const { validateToken } = require('../middleware/validate-token')
 
 usersRouter
     .route('/')
@@ -17,6 +17,18 @@ usersRouter
                 res.json(users)
             })
             .catch(next)
+    })
+
+    usersRouter
+    .route('/username-lookup')
+    .get(validateToken, (req, res, next) => {
+        const knexInstance = req.app.get('db')
+        const { username } = req.userInfo
+        UsersService.getUserByUsername(knexInstance, username)
+            .then(user => {
+                console.log(user)
+                res.status(200).json(user)
+            })
     })
 
 usersRouter
@@ -49,6 +61,8 @@ usersRouter
             }) 
             .catch(next)
     })
+
+    
 
 
 module.exports = usersRouter

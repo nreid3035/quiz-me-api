@@ -11,6 +11,8 @@ const quizzesRouter = require('./quizzes/quizzes-router')
 const bcrypt = require('bcrypt')
 const UsersService = require('./users/users-service')
 const jwt = require('jsonwebtoken')
+const {JWT_SECRET} = require('./config')
+const QuizFlashSetsService = require('./quiz-flash-sets/quiz-flash-sets-service')
 const jsonParser = express.json()
 
 const app = express()
@@ -19,16 +21,15 @@ const morganOption = (NODE_ENV === 'production')
     ? 'tiny'
     : 'common'
 
+
 app.use(morgan(morganOption))
 app.use(helmet())
+console.log(CLIENT_ORIGIN)
 app.use(cors({
     origin: CLIENT_ORIGIN
 }))
 
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*')
-    next()
-})
+
 
 app.post('/api/login', jsonParser, (req, res, next) => {
     const { username, password } = req.body
@@ -53,7 +54,7 @@ app.post('/api/login', jsonParser, (req, res, next) => {
         bcrypt.compare( password, user.password)
             .then(result => {
                 if(result) {
-                    jwt.sign(sessionObj, 'secret', { expiresIn: '10m'}, (err, token) => {
+                    jwt.sign(sessionObj, `${JWT_SECRET}`, { expiresIn: '60m'}, (err, token) => {
                         if(!err) {
                             return res.status(200).json({token})
                         }
@@ -75,10 +76,19 @@ app.use('/api/users', usersRouter)
 app.use('/api/flashcards', flashcardsRouter)
 app.use('/api/quizzes', quizzesRouter)
 
+app.get('/api/sets', (req, res, next) => {
+    QuizFlashSetsService.getAllSets(req.app.get('db'))
+        .then(response => {
+            res.status(200).json(response)
+        })
+        .catch(next)
+})
+
 app.post('/api/signup', jsonParser, (req, res, next) => {
     const { username, password, email, first_name, last_name } = req.body
-
+    console.log(req.body)
     if (!username) {
+        console.log('username error')
         return res.status(400).json({
             error: { message: 'invalid input' }
         })
@@ -86,6 +96,7 @@ app.post('/api/signup', jsonParser, (req, res, next) => {
 
     bcrypt.hash(password, 10)
         .then(hashPassword => {
+            console.log('string')
             const newUser = {
                 username,
                 password: hashPassword,
@@ -98,6 +109,7 @@ app.post('/api/signup', jsonParser, (req, res, next) => {
                 req.app.get('db'),
                 newUser
             ).then(user => {
+                console.log('user created')
                 return res.status(201).json(user)
             })
         })

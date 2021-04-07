@@ -1,14 +1,16 @@
 const FlashcardsService = {
-    getAllFlashcards(knex) {
+    getAllFlashcards(knex, username) {
         return knex
             .select('*')
             .from('quiz_me_flashcards')
+            .where('username', username)
     },
-    getFlashById(knex, id) {
+    getFlashById(knex, id, username) {
         return knex
             .select('*')
             .from('quiz_me_flashcards')
-            .where('id', id)
+            .where('username', username)
+            .where('flashcard_id', id)
             .first()
     },
     postFlash(knex, newFlash) {
@@ -20,9 +22,10 @@ const FlashcardsService = {
                 return rows[0]
             })
     },
-    deleteFlash(knex, id) {
+    deleteFlash(knex, id, username) {
         return knex('quiz_me_flashcards')
-            .where({ id })
+            .where('username', username)
+            .where('flashcard_id', id)
             .delete()
     }
 }

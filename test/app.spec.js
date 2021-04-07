@@ -100,41 +100,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
       })
 
       describe('POST /api/users', () => {
-          context('Given an xss attack script', () => {
-            it('should sanitize the user', () => {
-
-            })
-        })
-
-          context('Given a valid request', () => {
-              it('responds with 201 and the created user', () => {
-                  const newUser = {
-                      first_name: 'First',
-                      last_name: 'Last',
-                      username: 'CrunchyOmlete32',
-                      email: 'fakeemail@aol.com',
-                      user_password: 'passy123'
-                  }
-
-                  return supertest(app)
-                      .post('/api/users')
-                      .send(newUser)
-                      .expect(201)
-                      .expect(res => {
-                          expect(res.body).to.have.property('id')
-                          expect(res.body.first_name).to.eql(newUser.first_name)
-                          expect(res.body.last_name).to.eql(newUser.last_name)
-                          expect(res.body.username).to.eql(newUser.username)
-                          expect(res.body.email).to.eql(newUser.email)
-                          expect(res.body.user_password).to.eql(newUser.user_password)
-                      })
-                      .then(postRes => 
-                        supertest(app)
-                            .get(`/api/users/${postRes.body.id}`)
-                            .expect(postRes.body)
-                        )
-              })
-          })
+          
       })
 
       describe('DELETE /api/users/:userId', () => {
@@ -207,7 +173,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
       })
 
-      describe.only('POST /api/flashcards', () => {
+      describe('POST /api/flashcards', () => {
           context('Given an xss attack script', () => {
             it('should sanitize the card', () => {
 
@@ -237,7 +203,6 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
                     .expect(201)
                     .expect(res => {
                         expect(res.body).to.have.property('id')
-                        expect(res.body.userid).to.eql(newFlash.userid)
                         expect(res.body.question).to.eql(newFlash.question)
                         expect(res.body.answer).to.eql(newFlash.answer)
                     })
