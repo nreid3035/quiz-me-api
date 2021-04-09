@@ -8,7 +8,6 @@ const { response } = require('express')
 const bcrypt = require('bcrypt')
 
 const password = 'pass123'
-let testUserArray = []
 
 const returnUsersArray = (hashedPass) => {
             return  [
@@ -49,18 +48,10 @@ const returnUsersArray = (hashedPass) => {
         }
 
 const makeUsersArray = (password) => {
-    bcrypt.hash(password, 10, (err, hash) => {
-        if (err) {
-            return console.log(err)
-        }
-        console.log(returnUsersArray(hash))
-        testUsersArray = returnUsersArray(hash)
-        return
-    })
+    const cryptedPass = bcrypt.hashSync(password, 10)
+    return returnUsersArray(cryptedPass)
 }
 
-console.log(makeUsersArray(password))
-console.log(testUserArray)
 
 describe('Quiz Me Endpoints', () => {
     let db
@@ -74,13 +65,6 @@ describe('Quiz Me Endpoints', () => {
         app.set('db', db)
     })
 
-    before('insert users into quiz_me_users', () => {
-        
-        return db
-            .into('quiz_me_users')
-            .insert(testUsersArray)
-    })
-
     before('authenticate', () => {
         const loginInfo = {
             username: 'JJRedLips',
@@ -90,11 +74,7 @@ describe('Quiz Me Endpoints', () => {
             .post('/api/login')
             .send(loginInfo)
             .expect(201)
-            .then((err, response) => {
-               if (err) {
-                   console.log(err)
-
-               }
+            .then(response => {
                token = response.body.token
             })
     })
@@ -119,13 +99,13 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given valid user data', () => {
-              const testUsers = makeUsersArray(password)
+            //   const testUsers = makeUsersArray(password)
 
-              beforeEach('insert users', () => {
-                  return db 
-                      .into('quiz_me_users')
-                      .insert(testUsers)
-              })
+            //   beforeEach('insert users', () => {
+            //       return db 
+            //           .into('quiz_me_users')
+            //           .insert(testUsers)
+            //   })
               it('should respond with 200 and all users', () => {
                 return supertest(app)
                     .get('/api/users')
@@ -146,13 +126,13 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given an invalid user request', () => {
-              const testUsers = makeUsersArray(password)
+            //   const testUsers = makeUsersArray(password)
 
-              beforeEach('insert users', () => {
-                  return db 
-                      .into('quiz_me_users')
-                      .insert(testUsers)
-              })
+            //   beforeEach('insert users', () => {
+            //       return db 
+            //           .into('quiz_me_users')
+            //           .insert(testUsers)
+            //   })
               it('responds with 404 and an error saying data is invalid', () => {
                   const id = 123456
                   return supertest(app)
@@ -164,13 +144,13 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given a vaild request for a user', () => {
-            const testUsers = makeUsersArray(password)
+            // const testUsers = makeUsersArray(password)
 
-            beforeEach('insert users', () => {
-                return db
-                    .into('quiz_me_users')
-                    .insert(testUsers)
-            })
+            // beforeEach('insert users', () => {
+            //     return db
+            //         .into('quiz_me_users')
+            //         .insert(testUsers)
+            // })
 
             it('responds with 200 and the user', () => {
                 const id = 2
@@ -200,13 +180,13 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given a valid request', () => {
-              const testUsers = makeUsersArray(password)
+            //   const testUsers = makeUsersArray(password)
 
-              beforeEach('insert users', () => {
-                  return db
-                      .into('quiz_me_users')
-                      .insert(testUsers)
-              })
+            //   beforeEach('insert users', () => {
+            //       return db
+            //           .into('quiz_me_users')
+            //           .insert(testUsers)
+            //   })
 
               it('responds with 204', () => {
                   const idToDelete = 2
@@ -238,7 +218,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given valid flashcards', () => {
-              const testUsers = makeUsersArray(password)
+            //   const testUsers = makeUsersArray(password)
               const testFlashcards = makeFlashArray()
 
               beforeEach('insert users, then flashcards', () => {
@@ -263,13 +243,13 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
 
 
           context('Given a valid request', () => {
-            const testUsers = makeUsersArray(password)
+            // const testUsers = makeUsersArray(password)
 
-            beforeEach('insert users', () => {
-                return db
-                    .into('quiz_me_users')
-                    .insert(testUsers)
-            })
+            // beforeEach('insert users', () => {
+            //     return db
+            //         .into('quiz_me_users')
+            //         .insert(testUsers)
+            // })
 
             it('should respond with 201 and the new quiz', () => {
                 const newFlash = {
@@ -343,18 +323,18 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given valid flashcards', () => {
-              const testUsers = makeUsersArray(password)
-              const testCards = makeFlashArray()
-              beforeEach('insert users, then flashcards', () => {
-                  return db
-                      .into('quiz_me_users')
-                      .insert(testUsers)
-                      .then(() => {
-                          return db
-                            .into('quiz_me_flashcards')
-                            .insert(testCards)
-                      })
-              })
+            //   const testUsers = makeUsersArray(password)
+            //   const testCards = makeFlashArray()
+            //   beforeEach('insert users, then flashcards', () => {
+            //       return db
+            //           .into('quiz_me_users')
+            //           .insert(testUsers)
+            //           .then(() => {
+            //               return db
+            //                 .into('quiz_me_flashcards')
+            //                 .insert(testCards)
+            //           })
+            //   })
             it('should respond with 200 and the appropriate flashcard', () => {
               const id = 2
               const expectedFlashcard = testCards[id -1]
@@ -379,19 +359,19 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given valid flashcards', () => {
-              const testUsers = makeUsersArray(password)
-              const testFlashcards = makeFlashArray()
+            //   const testUsers = makeUsersArray(password)
+            //   const testFlashcards = makeFlashArray()
 
-              beforeEach('insert users, then flashcards', () => {
-                  return db 
-                      .into('quiz_me_users')
-                      .insert(testUsers)
-                      .then(() => {
-                          return db
-                              .into('quiz_me_flashcards')
-                              .insert(testFlashcards)
-                      })
-              })
+            //   beforeEach('insert users, then flashcards', () => {
+            //       return db 
+            //           .into('quiz_me_users')
+            //           .insert(testUsers)
+            //           .then(() => {
+            //               return db
+            //                   .into('quiz_me_flashcards')
+            //                   .insert(testFlashcards)
+            //           })
+            //   })
               it('should respond with 204', () => {
                 const idToDelete = 2
                 const expectedCards = testFlashcards.filter(card => card.id !== idToDelete)
@@ -420,19 +400,19 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given valid quiz data', () => {
-                  const testUsers = makeUsersArray(password)
-                  const testQuizzes = makeQuizzesArray()
+                //   const testUsers = makeUsersArray(password)
+                //   const testQuizzes = makeQuizzesArray()
 
-                  beforeEach('insert users, then quizzes', () => {
-                      return db 
-                          .into('quiz_me_users')
-                          .insert(testUsers)
-                          .then(() => {
-                              return db
-                                  .into('quiz_me_quizzes')
-                                  .insert(testQuizzes)
-                          })
-                  })
+                //   beforeEach('insert users, then quizzes', () => {
+                //       return db 
+                //           .into('quiz_me_users')
+                //           .insert(testUsers)
+                //           .then(() => {
+                //               return db
+                //                   .into('quiz_me_quizzes')
+                //                   .insert(testQuizzes)
+                //           })
+                //   })
                   it('should respond with 200 and the corresponding array of quizzes for the user', () => {
                     return supertest(app)
                         .get('/api/quizzes')
@@ -449,14 +429,14 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given a valid request', () => {
-                  const testUsers = makeUsersArray(password)
-                  const testFlashcards = makeFlashArray()
+                //   const testUsers = makeUsersArray(password)
+                //   const testFlashcards = makeFlashArray()
 
-                  beforeEach('insert users', () => {
-                      return db
-                          .into('quiz_me_users')
-                          .insert(testUsers)
-                  })
+                //   beforeEach('insert users', () => {
+                //       return db
+                //           .into('quiz_me_users')
+                //           .insert(testUsers)
+                //   })
                   it('should respond with 201 and the created quiz', () => {
                     const newQuiz = {
                         card_ids: [1, 2],
@@ -496,19 +476,19 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given valid quiz data', () => {
-                  const testUsers = makeUsersArray(password)  
-                  const testQuizzes = makeQuizzesArray()
+                //   const testUsers = makeUsersArray(password)  
+                //   const testQuizzes = makeQuizzesArray()
 
-                  beforeEach('insert users, then quizzes', () => {
-                      return db
-                          .into('quiz_me_users')
-                          .insert(testUsers)
-                          .then(() => {
-                              return db 
-                                  .into('quiz_me_quizzes')
-                                  .insert(testQuizzes)
-                          })
-                  })
+                //   beforeEach('insert users, then quizzes', () => {
+                //       return db
+                //           .into('quiz_me_users')
+                //           .insert(testUsers)
+                //           .then(() => {
+                //               return db 
+                //                   .into('quiz_me_quizzes')
+                //                   .insert(testQuizzes)
+                //           })
+                //   })
                   it('should respond with 200 and the corresponding quiz', () => {
                     const id = 2
                     const expectedQuiz = testQuizzes[id - 1]
@@ -533,19 +513,19 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given a valid dataset of quizzes', () => {
-                  const testUsers = makeUsersArray(password)
-                  const testQuizzes = makeQuizzesArray()
+                //   const testUsers = makeUsersArray(password)
+                //   const testQuizzes = makeQuizzesArray()
 
-                  beforeEach('insert users, then quizzes', () => {
-                      return db
-                          .into('quiz_me_users')
-                          .insert(testUsers)
-                          .then(() => {
-                              return db
-                                  .into('quiz_me_quizzes')
-                                  .insert(testQuizzes)
-                          })
-                  })
+                //   beforeEach('insert users, then quizzes', () => {
+                //       return db
+                //           .into('quiz_me_users')
+                //           .insert(testUsers)
+                //           .then(() => {
+                //               return db
+                //                   .into('quiz_me_quizzes')
+                //                   .insert(testQuizzes)
+                //           })
+                //   })
                   it('should respond with 204', () => {
                     const idToDelete = 2
                     const expectedQuizzes = testQuizzes.filter(quiz => quiz.id !== idToDelete)

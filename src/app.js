@@ -56,7 +56,7 @@ app.post('/api/login', jsonParser, (req, res, next) => {
                 if(result) {
                     jwt.sign(sessionObj, `${JWT_SECRET}`, { expiresIn: '60m'}, (err, token) => {
                         if(!err) {
-                            return res.status(200).json({token})
+                            return res.status(201).json({token})
                         }
                          else {
                              res.status(406).json({
