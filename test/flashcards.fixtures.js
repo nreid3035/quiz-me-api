@@ -1,34 +1,34 @@
 const makeFlashArray = () => {
     return [
         {
-            id: 1,
-            userid: 1,
+            flashcard_id: 1,
             question: 'HTML?',
-            answer: 'Hypertext Markup Language'
+            answer: 'Hypertext Markup Language',
+            username: 'Nreid3035'
         },
         {
-            id: 2,
-            userid: 1,
+            flashcard_id: 2,
             question: 'CRUD?',
-            answer: 'Create, Read, Update, Delete'
+            answer: 'Create, Read, Update, Delete',
+            username: 'MetsMan99'
         },
         {
-            id: 3,
-            userid: 2,
+            flashcard_id: 3,
             question: 'Who won the 2009 World Series?',
-            answer: 'New York Yankees'
+            answer: 'New York Yankees',
+            username: 'Nreid3035'
         },
         {
-            id: 4,
-            userid: 4,
+            flashcard_id: 4,
             question: 'Who am I?',
             answer: 'I am me',
+            username: 'JJRedLips'
         },
         {
-            id: 5,
-            userid: 4,
+            flashcard_id: 5,
             question: 'Who was the 16th president of the United States?',
-            answer: 'Abraham Lincoln'
+            answer: 'Abraham Lincoln',
+            username: 'HBoz89'
         }
     ]
 }

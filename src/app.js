@@ -96,7 +96,6 @@ app.post('/api/signup', jsonParser, (req, res, next) => {
 
     bcrypt.hash(password, 10)
         .then(hashPassword => {
-            console.log('string')
             const newUser = {
                 username,
                 password: hashPassword,

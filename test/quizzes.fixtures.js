@@ -1,16 +1,14 @@
 const makeQuizzesArray = () => {
     return [
         {
-            id: 1,
-            card_ids: [1, 2],
-            userid: 1,
+            prime_quiz_id: 1,
             quiz_name: 'Dev Quiz',
+            username: 'Nreid3035'
         },
         {
-            id: 2,
-            card_ids: [4, 5],
-            userid: 4,
-            quiz_name: 'My Quiz', 
+            prime_quiz_id: 2,
+            quiz_name: 'My Quiz',
+            username: 'HBoz89'
         }
     ]
 }

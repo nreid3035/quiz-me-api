@@ -2,13 +2,69 @@ const app = require('../src/app')
 const { expect } = require('chai')
 const knex = require('knex')
 const supertest = require('supertest')
-const { makeUsersArray } = require('./users.fixtures')
 const { makeFlashArray } = require('./flashcards.fixtures')
 const { makeQuizzesArray } = require('./quizzes.fixtures')
+const { response } = require('express')
+const bcrypt = require('bcrypt')
 
+const password = 'pass123'
+let testUserArray = []
+
+const returnUsersArray = (hashedPass) => {
+            return  [
+                {
+                    id: 78458,
+                    first_name: 'Nicholas',
+                    last_name: 'Reid',
+                    username: 'Nreid3035',
+                    email: 'nreid3035@gmail.com',
+                    password: hashedPass  
+                  },
+                {
+                    id: 9523,
+                    first_name: 'Tom',
+                    last_name: 'Seaver',
+                    username: 'MetsMan99',
+                    email: 'fakeemail@gmail.com',
+                    password: hashedPass  
+                  },
+                  {
+                    id: 845,
+                    first_name: 'Janet',
+                    last_name: 'Levinson',
+                    username: 'JJRedLips',
+                    email: 'myemail@gmail.com',
+                    password: hashedPass   
+                  },
+                  {
+                    id: 28,
+                    first_name: 'Hannah',
+                    last_name: 'Bozsik',
+                    username: 'Hboz89',
+                    email: 'hannahboz@gmail.com',
+                    password: hashedPass  
+                  },
+                
+            ]
+        }
+
+const makeUsersArray = (password) => {
+    bcrypt.hash(password, 10, (err, hash) => {
+        if (err) {
+            return console.log(err)
+        }
+        console.log(returnUsersArray(hash))
+        testUsersArray = returnUsersArray(hash)
+        return
+    })
+}
+
+console.log(makeUsersArray(password))
+console.log(testUserArray)
 
 describe('Quiz Me Endpoints', () => {
     let db
+    let token = null
 
     before('make knex instance with test db', () => {
         db = knex({
@@ -17,6 +73,34 @@ describe('Quiz Me Endpoints', () => {
         })
         app.set('db', db)
     })
+
+    before('insert users into quiz_me_users', () => {
+        
+        return db
+            .into('quiz_me_users')
+            .insert(testUsersArray)
+    })
+
+    before('authenticate', () => {
+        const loginInfo = {
+            username: 'JJRedLips',
+            password: 'pass123'
+        }
+        return supertest(app)
+            .post('/api/login')
+            .send(loginInfo)
+            .expect(201)
+            .then((err, response) => {
+               if (err) {
+                   console.log(err)
+
+               }
+               token = response.body.token
+            })
+    })
+
+
+
 
 after('disconnect from db', () => db.destroy())
 
@@ -35,7 +119,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given valid user data', () => {
-              const testUsers = makeUsersArray()
+              const testUsers = makeUsersArray(password)
 
               beforeEach('insert users', () => {
                   return db 
@@ -62,7 +146,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given an invalid user request', () => {
-              const testUsers = makeUsersArray()
+              const testUsers = makeUsersArray(password)
 
               beforeEach('insert users', () => {
                   return db 
@@ -80,7 +164,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given a vaild request for a user', () => {
-            const testUsers = makeUsersArray()
+            const testUsers = makeUsersArray(password)
 
             beforeEach('insert users', () => {
                 return db
@@ -116,7 +200,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given a valid request', () => {
-              const testUsers = makeUsersArray()
+              const testUsers = makeUsersArray(password)
 
               beforeEach('insert users', () => {
                   return db
@@ -142,28 +226,25 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
   })
 
   describe('quiz_me_flashcards endpoints', () => {
-      describe('GET /api/flashcards', () => {
+      describe.only('GET /api/flashcards', () => {
           context('Given no flashcards', () => {
+              
               it('should respond with 200 and an empty array', () => {
                 return supertest(app)
                     .get('/api/flashcards')
+                    .set('session_token', token)
                     .expect(200, [])
               })
           })
 
           context('Given valid flashcards', () => {
-              const testUsers = makeUsersArray()
+              const testUsers = makeUsersArray(password)
               const testFlashcards = makeFlashArray()
 
               beforeEach('insert users, then flashcards', () => {
-                  return db
-                      .into('quiz_me_users')
-                      .insert(testUsers)
-                      .then(() => {
-                          return db
-                              .into('quiz_me_flashcards')
-                              .insert(testFlashcards)
-                      })
+                     return db
+                        .into('quiz_me_flashcards')
+                        .insert(testFlashcards)
               })
               it('should respond with 200 and all flashcards associated with that user', () => {
                   return supertest(app)
@@ -182,7 +263,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
 
 
           context('Given a valid request', () => {
-            const testUsers = makeUsersArray()
+            const testUsers = makeUsersArray(password)
 
             beforeEach('insert users', () => {
                 return db
@@ -215,7 +296,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
         //   context('Given a valid request', () => {
-        //       const testUsers = makeUsersArray()
+        //       const testUsers = makeUsersArray(password)
   
         //       beforeEach('insert users', () => {
         //           return db
@@ -262,7 +343,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given valid flashcards', () => {
-              const testUsers = makeUsersArray()
+              const testUsers = makeUsersArray(password)
               const testCards = makeFlashArray()
               beforeEach('insert users, then flashcards', () => {
                   return db
@@ -298,7 +379,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
           })
 
           context('Given valid flashcards', () => {
-              const testUsers = makeUsersArray()
+              const testUsers = makeUsersArray(password)
               const testFlashcards = makeFlashArray()
 
               beforeEach('insert users, then flashcards', () => {
@@ -339,7 +420,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given valid quiz data', () => {
-                  const testUsers = makeUsersArray()
+                  const testUsers = makeUsersArray(password)
                   const testQuizzes = makeQuizzesArray()
 
                   beforeEach('insert users, then quizzes', () => {
@@ -368,7 +449,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given a valid request', () => {
-                  const testUsers = makeUsersArray()
+                  const testUsers = makeUsersArray(password)
                   const testFlashcards = makeFlashArray()
 
                   beforeEach('insert users', () => {
@@ -415,7 +496,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given valid quiz data', () => {
-                  const testUsers = makeUsersArray()  
+                  const testUsers = makeUsersArray(password)  
                   const testQuizzes = makeQuizzesArray()
 
                   beforeEach('insert users, then quizzes', () => {
@@ -452,7 +533,7 @@ afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz
               })
 
               context('Given a valid dataset of quizzes', () => {
-                  const testUsers = makeUsersArray()
+                  const testUsers = makeUsersArray(password)
                   const testQuizzes = makeQuizzesArray()
 
                   beforeEach('insert users, then quizzes', () => {
