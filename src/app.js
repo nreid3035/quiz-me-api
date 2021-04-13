@@ -65,7 +65,9 @@ app.post('/api/login', jsonParser, (req, res, next) => {
                          }
                     })    
                 } else {
-                    res.status(401).json("Credential Error")
+                    res.status(401).json({
+                        error: { message: 'Credential Error' }
+                    })
                 }
             }) 
     })
@@ -87,8 +89,7 @@ app.get('/api/sets', (req, res, next) => {
 app.post('/api/signup', jsonParser, (req, res, next) => {
     const { username, password, email, first_name, last_name } = req.body
     console.log(req.body)
-    if (!username) {
-        console.log('username error')
+    if (!username || !password || !email || !first_name || !last_name) {
         return res.status(400).json({
             error: { message: 'invalid input' }
         })

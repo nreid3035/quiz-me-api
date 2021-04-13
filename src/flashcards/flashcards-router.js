@@ -2,11 +2,17 @@ require('dotenv').config()
 const path = require('path')
 const express = require('express')
 const FlashcardsService = require('./flashcards-service')
+const xss = require('xss')
 
 const flashcardsRouter = express.Router()
 const jsonParser = express.json()
 
 const { validateToken } = require('../middleware/validate-token')
+
+const sanitizeThatFlashcard = (flashcard) => {
+    flashcard.question = xss(flashcard.question)
+    flashcard.answer = xss(flashcard.answer)
+}
 
 flashcardsRouter
     .route('/')
@@ -29,6 +35,8 @@ flashcardsRouter
             question: question,
             answer: answer
         }
+
+        sanitizeThatFlashcard(newFlashcard)
 
         const knexInstance = req.app.get('db')
         FlashcardsService.postFlash(knexInstance, newFlashcard)

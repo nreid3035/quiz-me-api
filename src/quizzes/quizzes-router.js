@@ -3,9 +3,14 @@ const express = require('express')
 const QuizzesService = require('./quizzes-service')
 const QuizFlashSetsService = require('../quiz-flash-sets/quiz-flash-sets-service')
 const { validateToken } = require('../middleware/validate-token')
+const xss = require('xss')
 
 const quizzesRouter = express.Router()
 const jsonParser = express.json()
+
+const sanitizeThatQuiz = (quiz) => {
+     return quiz.quiz_name = xss(quiz.quiz_name)
+}
 
 quizzesRouter
     .route('/')
@@ -26,7 +31,9 @@ quizzesRouter
             quiz_name,
             username
         }
-        console.log(flashcardIds)
+        
+        sanitizeThatQuiz(newQuiz)
+        
         
         QuizzesService.postQuiz(knexInstance, newQuiz)
             .then(quiz => {
@@ -54,7 +61,7 @@ quizzesRouter
         QuizzesService.getQuizById(knexInstance, quizId)
             .then(quiz => {
                 console.log(quiz)
-                if (!quiz) {
+                if (!quiz.length) {
                     res.status(404).json({
                         error: { message: 'Quiz does not exist' }
                     })
@@ -66,6 +73,11 @@ quizzesRouter
             .catch(next)
     })
     .get((req, res, next) => {
+        if (!res.quiz) {
+            res.status(404).json({
+                error: { message: 'Quiz does not exist'}
+            })
+        }
         res.status(200).json(res.quiz)
     })
     .delete((req, res, next) => {
