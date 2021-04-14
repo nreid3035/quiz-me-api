@@ -1,3 +1,4 @@
+// FUNCTION TO MAKE TEST DATA SETS OF QUIZZESS
 const makeQuizzesArray = () => {
     return [
         {

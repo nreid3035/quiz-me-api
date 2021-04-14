@@ -8,9 +8,11 @@ const { makeSetsArray } = require('./quiz-flash-sets.fixtures')
 const { response } = require('express')
 const bcrypt = require('bcrypt')
 
+// TEST VARIABLES
 const username = 'Nreid3035'
 const password = 'pass123'
 
+// FUNCTION TO CREATE TEST USERS
 const returnUsersArray = (hashedPass) => {
             return  [
                 {
@@ -49,11 +51,13 @@ const returnUsersArray = (hashedPass) => {
             ]
         }
 
+// HASHES PASSWORD AND RETURNS USERS ARRAY
 const makeUsersArray = (password) => {
     const cryptedPass = bcrypt.hashSync(password, 10)
     return returnUsersArray(cryptedPass)
 }
 
+// TEST DATA SETS
 const testUsers = makeUsersArray(password)
 const testFlashcards = makeFlashArray()
 const testQuizzes = makeQuizzesArray()
@@ -83,6 +87,7 @@ before('clean the table', () => db('quiz_me_users'))
 beforeEach('insert table data, authenticate user', () => {
     
 
+    // POPULATE DATABASE WITH TEST DATA SETS BEFORE EACH TEST, THEN LOGIN AND ASSIGN TOKEN TO GLOBAL VARIABLE
     return db
         .into('quiz_me_users')
         .insert(testUsers)
@@ -112,7 +117,8 @@ beforeEach('insert table data, authenticate user', () => {
         })
 })
 
-afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz_me_flashcards RESTART IDENTITY CASCADE'))
+// CLEAR ALL TABLES AFTER EACH TEST
+afterEach('cleanup', () => db.raw('TRUNCATE quiz_me_users, quiz_me_quizzes, quiz_me_flashcards, quiz_flash_sets RESTART IDENTITY CASCADE'))
 
   
 

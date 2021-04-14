@@ -6,11 +6,13 @@ pg.defaults.ssl = process.env.NODE_ENV === "production" ? { rejectUnauthorized: 
 
 const { PORT, DB_URL } = require('./config')
 
+// ASSIGN A KNEX OBJECT TO A VARIABLE
 const db = knex({
     client: 'pg',
     connection: DB_URL
 })
 
+// SET THAT KNEX OBJECT TO APP TO BE AVAILABLE DURING REQUESTS
 app.set('db', db)
 
 app.listen(PORT, () => {

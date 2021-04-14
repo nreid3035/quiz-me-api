@@ -17,6 +17,7 @@ const jsonParser = express.json()
 
 const app = express()
 
+
 const morganOption = (NODE_ENV === 'production')
     ? 'tiny'
     : 'common'
@@ -30,11 +31,14 @@ app.use(cors({
 }))
 
 
-
+// ENDPOINT FOR LOGGING INTO THE SITE
 app.post('/api/login', jsonParser, (req, res, next) => {
+
+    // EXTRACTS USERNAME AND PASSWORD FROM REQUEST BODY
     const { username, password } = req.body
 
 
+    // USERS SERVICE OBJECT WILL GET THE USER BY THEIR UNIQUE USERNAME
     UsersService.getUserByUsername(
         req.app.get('db'),
         username
@@ -45,26 +49,32 @@ app.post('/api/login', jsonParser, (req, res, next) => {
             })
         }
 
+        // DECLARE OBJECT TO STORE DATA IN THE JSON WEB TOKEN
         const sessionObj = {
             username : user.username,
             first_name: user.first_name,
             last_name: user.last_name
         }
 
+        // USE BCRYPT COMPARE FUNCTION TO COMPARE THE PASSWORD FROM THE REQUEST, AND THE HASHED PASSWORD FROM THE DATABASE
         bcrypt.compare( password, user.password)
             .then(result => {
                 if(result) {
                     jwt.sign(sessionObj, `${JWT_SECRET}`, { expiresIn: '60m'}, (err, token) => {
+                        // IF NO ERRORS RETURN 201 AND THE TOKEN
                         if(!err) {
                             return res.status(201).json({token})
                         }
+                        // ELSE RETURN 406 WITH A ERROR MESSAGE REGARDING TOKEN GENERATION
                          else {
                              res.status(406).json({
                                  error: { message: 'Error in token generation' }
                              })
                          }
-                    })    
-                } else {
+                    })   
+                } 
+                // ELSE RETURN 401 AND AN ERROR MESSAGE REGARDING CREDENTIALS
+                else {
                     res.status(401).json({
                         error: { message: 'Credential Error' }
                     })
@@ -73,11 +83,13 @@ app.post('/api/login', jsonParser, (req, res, next) => {
     })
 })
 
-
+// ATTACH ROUTERS TO APP
 app.use('/api/users', usersRouter)
 app.use('/api/flashcards', flashcardsRouter)
 app.use('/api/quizzes', quizzesRouter)
 
+
+// ENDPOINT TO GET ALL SETS IN quiz_flash_sets
 app.get('/api/sets', (req, res, next) => {
     QuizFlashSetsService.getAllSets(req.app.get('db'))
         .then(response => {
@@ -86,7 +98,10 @@ app.get('/api/sets', (req, res, next) => {
         .catch(next)
 })
 
+// SIGNUP ENDPOINT, ADDS USER TO DATABASE
 app.post('/api/signup', jsonParser, (req, res, next) => {
+    
+    // EXTRACT INFO FOR A NEW USER
     const { username, password, email, first_name, last_name } = req.body
     console.log(req.body)
     if (!username || !password || !email || !first_name || !last_name) {
@@ -95,8 +110,10 @@ app.post('/api/signup', jsonParser, (req, res, next) => {
         })
     }
 
+    // HASH PASSWORD, SALT OF 10
     bcrypt.hash(password, 10)
         .then(hashPassword => {
+            // DECLARE NEW USER OBJECT WITH HASHED PASSWORD INSTEAD OF THE INITIAL PW
             const newUser = {
                 username,
                 password: hashPassword,
@@ -105,29 +122,25 @@ app.post('/api/signup', jsonParser, (req, res, next) => {
                 last_name
             }
 
+            // USE SERVICE OBJECT TO POST A NEW USER TO THE DATABASE
             UsersService.postNewUser(
                 req.app.get('db'),
                 newUser
             ).then(user => {
-                console.log('user created')
                 return res.status(201).json(user)
             })
         })
 })
 
-app.get('/api/', (req, res) => {
-    res.json({ok: true})
-})
-
-app.get('/', (req, res) => {
-    res.send('Hello World!')
-})
-
+// FUNCTION TO HANDLE ERRORS
 app.use(function errorHandler(error, req, res, next) {
     let response
+    // IF IN PRODUCTION MODE ONLY SEND BACK SERVER ERROR
     if(NODE_ENV === 'production') {
         response = { error: { message: 'Server Error' }}
-    } else {
+    } 
+    // ELSE LOG FULL ERROR MESSAGE
+    else {
         console.error(error)
         response = { message: error.message, error }
     }
