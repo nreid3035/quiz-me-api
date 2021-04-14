@@ -33,9 +33,10 @@ usersRouter
         const { username } = req.userInfo
         UsersService.getUserByUsername(knexInstance, username)
             .then(user => {
-                console.log(user)
                 res.status(200).json(user)
             })
+            .catch(next)
+            
     })
 
 // USERS ROUTER FOR /API/USERS/:USERID
