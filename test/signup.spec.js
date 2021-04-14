@@ -4,6 +4,7 @@ const knex = require('knex')
 const supertest = require('supertest')
 const bcrypt = require('bcrypt')
 
+// FUNCTION TO RETURN AN ARRAY OF USERS DATA FOR TESTING
 const returnUsersArray = (hashedPass) => {
     return  [
         {
@@ -42,6 +43,7 @@ const returnUsersArray = (hashedPass) => {
     ]
 }
 
+// FUNCTION TO HASH PASSWORD AND RETURN USERS TEST ARRAY
 const makeUsersArray = (password) => {
 const cryptedPass = bcrypt.hashSync(password, 10)
 return returnUsersArray(cryptedPass)
